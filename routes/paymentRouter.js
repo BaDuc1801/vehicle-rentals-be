@@ -1,6 +1,5 @@
 import paymentController from "../controller/paymentController.js";
 import express from "express";
-import userMiddleware from "../middleware/userMiddleware.js";
 
 const paymentRouter = express.Router();
 
