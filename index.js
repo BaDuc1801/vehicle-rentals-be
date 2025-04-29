@@ -25,6 +25,10 @@ app.use('/users', userRouter)
 app.use('/vehicles', vehicleRouter)
 app.use('/payments', paymentRouter)
 
+app.get("/", (req, res) => {
+    res.status(200).json({ message: "hello!" });
+});
+
 app.listen(8080, () => {
     console.log("Server is running")
 })
