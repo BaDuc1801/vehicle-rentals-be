@@ -11,7 +11,7 @@ dotenv.config()
 await mongoose.connect(process.env.MONGOCONNECT)
 
 const corsOptions = {
-    origin: 'http://localhost:5173',  // Chỉ định frontend của bạn
+    origin: 'https://vehicle-rentals-fe.vercel.app',  // Chỉ định frontend của bạn
     methods: ['GET', 'POST', 'PUT', 'DELETE'],  // Các phương thức được phép
     credentials: true,  // Cho phép gửi cookies
 };
