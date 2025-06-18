@@ -11,7 +11,7 @@ dotenv.config()
 await mongoose.connect(process.env.MONGOCONNECT)
 
 const corsOptions = {
-    origin: 'https://vehicle-rentals-fe.vercel.app',  
+    origin: ['https://vehicle-rentals-fe.vercel.app', 'http://localhost:5173'],  
     methods: ['GET', 'POST', 'PUT', 'DELETE'],  
     credentials: true, 
 };
