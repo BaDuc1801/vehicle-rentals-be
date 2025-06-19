@@ -24,6 +24,4 @@ userRouter.put('/up-avatar', userMiddleware.verifyToken, upload.single('avatar')
 userRouter.put('/change-password', userMiddleware.verifyToken, userController.changePassword);
 userRouter.delete('/delete-user/:id', userController.deleteUser);
 
-
-
 export default userRouter
