@@ -13,7 +13,7 @@ const sendEmailService = async (email) => {
     let transporter = nodemailer.createTransport({
         host: "smtp.gmail.com",
         port: 587,
-        secure: false, 
+        secure: false,
         auth: {
             user: process.env.EMAIL_USERNAME,
             pass: process.env.EMAIL_PASSWORD,
@@ -34,6 +34,19 @@ const userController = {
     getUsers: async (req, res) => {
         const listUser = await userModel.find();
         res.status(200).send(listUser);
+    },
+
+    getUserById: async (req, res) => {
+        try {
+            const { id } = req.body;
+            const user = await userModel.findById(id);
+            if (!user) {
+                return res.status(404).send({ message: "Không tìm thấy người dùng" });
+            }
+            res.status(200).send(user);
+        } catch (error) {
+            res.status(400).send(error.message);
+        }
     },
 
     register: async (req, res) => {
@@ -116,15 +129,15 @@ const userController = {
         const user = await userModel.findById(req.user.userId).populate({
             path: 'paymentId',
             populate: {
-            path: 'vehicleId'
+                path: 'vehicleId'
             }
         });
         const currentDate = new Date();
         user.paymentId.forEach(async (payment) => {
             if (payment.endDate && new Date(payment.endDate) < currentDate) {
-            payment.status = "completed";
-            payment.paymentMethod = "bank";
-            await payment.save();
+                payment.status = "completed";
+                payment.paymentMethod = "bank";
+                await payment.save();
             }
         });
         res.status(200).send(user)
@@ -143,7 +156,7 @@ const userController = {
         }
         const userId = req.params.id;
         const update = req.body;
-        const rs = await userModel.findByIdAndUpdate({_id: userId}, update, { new: true });
+        const rs = await userModel.findByIdAndUpdate({ _id: userId }, update, { new: true });
         res.status(200).send(rs)
     },
 
@@ -201,9 +214,9 @@ const userController = {
         res.status(200).send(rs)
     },
 
-    sendEmail : async (req, res) => {
-        const {email} = req.body;
-        const newPassword = "123456@"; 
+    sendEmail: async (req, res) => {
+        const { email } = req.body;
+        const newPassword = "123456@";
         const hashedPassword = bcrypt.hashSync(newPassword, 10);
         await userModel.updateOne({ email: email }, { password: hashedPassword });
         const rs = await sendEmailService(email);
