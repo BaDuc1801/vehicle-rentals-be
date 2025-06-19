@@ -38,7 +38,7 @@ const userController = {
 
     getUserById: async (req, res) => {
         try {
-            const { id } = req.params;
+            const { id } = req.params.id;
             const user = await userModel.findById(id);
             if (!user) {
                 return res.status(404).send({ message: "Không tìm thấy người dùng" });
