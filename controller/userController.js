@@ -202,6 +202,42 @@ const userController = {
         }
     },
 
+    uploadAvatarByAdmin: async (req, res) => {
+        let avatar = req.file;
+        let {userId} = req.body;
+        let user = await userModel.findById(userId);
+        if (user) {
+            if (avatar) {
+                const dataUrl = `data:${avatar.mimetype};base64,${avatar.buffer.toString('base64')}`;
+                await cloudinary.uploader.upload(dataUrl,
+                    { resource_type: 'auto' },
+                    async (err, result) => {
+                        if (result && result.url) {
+                            user.avatar = result.url;
+                            await user.save()
+                            return res.status(200).json({
+                                message: 'Client information updated successfully',
+                                user: result.url
+                            });
+                        } else {
+                            return res.status(500).json({
+                                message: 'Error when upload file: ' + err.message
+                            });
+                        }
+                    }
+                )
+            } else {
+                return res.status(404).json({
+                    message: 'Image not found'
+                });
+            }
+        } else {
+            return res.status(404).json({
+                message: 'Client not found'
+            });
+        }
+    },
+
     changePassword: async (req, res) => {
         const { password, newPassword } = req.body;
         const user = await userModel.findOne({ _id: req.user.userId });
