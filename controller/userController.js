@@ -82,6 +82,11 @@ const userController = {
                 role: user.role
             }, process.env.SECRETKEY, { expiresIn: "24h" });
 
+            res.cookie("access_token", accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: "None",
+            });
             res.cookie('refresh_token', refreshToken, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
