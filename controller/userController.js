@@ -122,6 +122,7 @@ const userController = {
 
     logout: async (req, res) => {
         res.clearCookie('refresh_token');
+        res.clearCookie('access_token');
         res.status(200).json({ message: "Đăng xuất thành công" })
     },
 
