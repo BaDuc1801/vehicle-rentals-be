@@ -204,7 +204,7 @@ const userController = {
 
     uploadAvatarByAdmin: async (req, res) => {
         let avatar = req.file;
-        let {userId} = req.body;
+        let userId = req.params.id;
         let user = await userModel.findById(userId);
         if (user) {
             if (avatar) {

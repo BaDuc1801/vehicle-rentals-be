@@ -21,7 +21,7 @@ userRouter.post('/refresh-token', userController.refreshAccessToken);
 userRouter.put('/user/:id', userMiddleware.verifyToken, userController.updateUserByAdmin);
 userRouter.put('/update-infor', userMiddleware.verifyToken, userController.updateUser);
 userRouter.put('/up-avatar', userMiddleware.verifyToken, upload.single('avatar'), userController.uploadAvatar);
-userRouter.put('/up-avatar-by-admin',upload.single('avatar'), userController.uploadAvatarByAdmin);
+userRouter.put('/up-avatar-by-admin/:id',upload.single('avatar'), userController.uploadAvatarByAdmin);
 userRouter.put('/change-password', userMiddleware.verifyToken, userController.changePassword);
 userRouter.delete('/delete-user/:id', userController.deleteUser);
 
