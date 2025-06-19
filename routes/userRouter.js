@@ -12,6 +12,7 @@ const upload = multer({
 
 userRouter.get('/', userController.getUsers);
 userRouter.get('/get-infor', userMiddleware.verifyToken, userController.getUserInfor);
+userRouter.get('/get-user-by-id', userController.getUserById);
 userRouter.post('/register', userMiddleware.checkValidUser, userController.register);
 userRouter.post('/login', userController.login);
 userRouter.post('/logout', userController.logout);
