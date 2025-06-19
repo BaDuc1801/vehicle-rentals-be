@@ -126,8 +126,16 @@ const userController = {
     },
 
     logout: async (req, res) => {
-        res.clearCookie('refresh_token');
-        res.clearCookie('access_token');
+        res.clearCookie('refresh_token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'None',
+        });
+        res.clearCookie('access_token', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'None',
+        });
         res.status(200).json({ message: "Đăng xuất thành công" })
     },
 
