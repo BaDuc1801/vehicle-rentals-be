@@ -14,7 +14,7 @@ const userMiddleware = {
     },
     verifyToken: async (req, res, next) => {
         try {
-            const token = req.cookies.token;
+            const token = req.cookies.access_token;
 
             if (token) {
                 jwt.verify(token, process.env.SECRETKEY, (err, decoded) => {

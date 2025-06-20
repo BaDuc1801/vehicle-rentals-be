@@ -95,7 +95,6 @@ const userController = {
 
             res.status(200).send({
                 message: "Đăng nhập thành công",
-                accessToken: accessToken
             })
         } catch (error) {
             res.status(400).send(error.message)
