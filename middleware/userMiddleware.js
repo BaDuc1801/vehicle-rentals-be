@@ -14,22 +14,22 @@ const userMiddleware = {
     },
     verifyToken: async (req, res, next) => {
         try {
-            const auth = req.headers['authorization'];
-            if (auth) {
-                const token = auth.split(' ')[1];
+            const token = req.cookies.token;
+
+            if (token) {
                 jwt.verify(token, process.env.SECRETKEY, (err, decoded) => {
                     if (err) {
-                        return res.status(401).json({ message: 'Access token is invalid' })
+                        return res.status(401).json({ message: 'Access token is invalid' });
                     } else {
                         req.user = decoded;
                         next();
                     }
-                })
+                });
             } else {
-                res.status(401).json({ message: 'Access token is missing' })
+                res.status(401).json({ message: 'Access token is missing' });
             }
         } catch (error) {
-            res.status(401).json({ message: 'Access token is missing' })
+            res.status(401).json({ message: 'Access token is missing' });
         }
     },
     checkRoleAdmin: (req, res, next) => {
