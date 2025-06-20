@@ -6,7 +6,7 @@ const userMiddleware = {
         const { email } = req.body;
         const existed = await userModel.findOne({ email })
         if (existed) {
-            return res.status(400).send({message : "Email đã tồn tại"})
+            return res.status(400).send({ message: "Email đã tồn tại" })
         }
         else {
             next()
@@ -25,11 +25,20 @@ const userMiddleware = {
                         next();
                     }
                 })
+            } else {
+                res.status(401).json({ message: 'Access token is missing' })
             }
         } catch (error) {
             res.status(401).json({ message: 'Access token is missing' })
         }
     },
+    checkRoleAdmin: (req, res, next) => {
+        if (req.user && req.user.role === 'Admin') {
+            next();
+        } else {
+            res.status(403).json({ message: 'Bạn không có quyền truy cập' });
+        }
+    }
 }
 
 export default userMiddleware
