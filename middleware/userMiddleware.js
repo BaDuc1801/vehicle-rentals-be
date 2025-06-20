@@ -26,7 +26,7 @@ const userMiddleware = {
                     }
                 });
             } else {
-                res.status(401).json({ message: 'Access token is missing' });
+                res.status(401).json({ message: token });
             }
         } catch (error) {
             res.status(401).json({ message: 'Access token is missing' });
