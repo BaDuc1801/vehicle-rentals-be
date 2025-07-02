@@ -124,10 +124,9 @@ const userController = {
             let user = await userModel.findOne({ email: payload.email });
 
             let isNewUser = false;
-
             if (!user) {
                 user = await userModel.create({
-                    username: payload.username,
+                    username: payload.name,
                     email: payload.email,
                     password: '',
                     avatar: payload.picture,
@@ -234,6 +233,7 @@ const userController = {
     updateUser: async (req, res) => {
         const update = req.body;
         const rs = await userModel.findByIdAndUpdate(req.user.userId, update, { new: true });
+        console.log(rs)
         res.status(200).send(rs)
     },
 
