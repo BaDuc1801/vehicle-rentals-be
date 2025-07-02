@@ -4,6 +4,8 @@ import jwt from "jsonwebtoken"
 import { v2 as cloudinary } from 'cloudinary'
 import dotenv from "dotenv"
 import nodemailer from 'nodemailer';
+import { OAuth2Client } from 'google-auth-library';
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 dotenv.config()
 
 const getCloudinaryConfig = JSON.parse(process.env.CLOUD_DINARY_CONFIG);
@@ -74,12 +76,12 @@ const userController = {
             }
             const accessToken = jwt.sign({
                 userId: user._id,
-                role: user.role
+                role: user.role,
             }, process.env.SECRETKEY, { expiresIn: "1h" });
 
             const refreshToken = jwt.sign({
                 userId: user._id,
-                role: user.role
+                role: user.role,
             }, process.env.SECRETKEY, { expiresIn: "24h" });
 
             res.cookie("access_token", accessToken, {
@@ -100,6 +102,79 @@ const userController = {
             res.status(400).send(error.message)
         }
     },
+
+    loginGoogle: async (req, res) => {
+        try {
+            const { tokenGoogle } = req.body;
+
+            if (!tokenGoogle) {
+                return res.status(400).json({ message: 'Token Google không hợp lệ' });
+            }
+            const ticket = await client.verifyIdToken({
+                idToken: tokenGoogle,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+
+            const payload = ticket.getPayload();
+
+            if (!payload) {
+                return res.status(401).json({ message: 'Xác thực Google thất bại' });
+            }
+
+            let user = await userModel.findOne({ email: payload.email });
+
+            let isNewUser = false;
+
+            if (!user) {
+                user = await userModel.create({
+                    username: payload.username,
+                    email: payload.email,
+                    password: '',
+                    avatar: payload.picture,
+                });
+                isNewUser = true;
+            }
+
+            const accessToken = jwt.sign(
+                { userId: user._id, role: user.role },
+                process.env.SECRETKEY,
+                { expiresIn: '1h' }
+            );
+
+            const refreshToken = jwt.sign(
+                { userId: user._id, role: user.role },
+                process.env.SECRETKEY,
+                { expiresIn: '24h' }
+            );
+
+            res.cookie('access_token', accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'None',
+            });
+
+            res.cookie('refresh_token', refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'None',
+            });
+            res.status(200).json({
+                message: isNewUser ? 'Đăng ký Google thành công' : 'Đăng nhập Google thành công',
+                user: {
+                    _id: user._id,
+                    username: user.username,
+                    email: user.email,
+                    avatar: user.avatar,
+                    role: user.role,
+                },
+            });
+
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ message: 'Đăng nhập Google thất bại', error: err.message });
+        }
+    },
+
 
     refreshAccessToken: async (req, res) => {
         const refreshToken = req.cookies.refresh_token;
