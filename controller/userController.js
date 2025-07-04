@@ -203,12 +203,15 @@ const userController = {
     loginGoogleFirebase: async (req, res) => {
         try {
             const { idToken, phoneNumber } = req.body;
+            console.log("hi1")
             if (!idToken) {
                 return res.status(400).send({ message: 'ID token không hợp lệ' });
             }
             let decodedToken;
+            console.log("hi2")
             try {
                 decodedToken = await admin.auth().verifyIdToken(idToken);
+                console.log("hi3")
             } catch (error) {
                 return res.status(401).send({ message: 'ID token không hợp lệ', error: error.message });
             }
