@@ -289,7 +289,13 @@ const userController = {
                 role: user.role
             }, process.env.SECRETKEY, { expiresIn: "1h" });
 
-            res.status(200).send({ accessToken: newAccessToken });
+            res.cookie("access_token", newAccessToken, {
+                httpOnly: true,
+                secure: true,
+                sameSite: 'None',
+            });
+
+            res.status(200).send({ message: "Tạo accessToken mới thành công" });
         } catch (error) {
             res.status(403).send({ message: 'Refresh token không hợp lệ hoặc đã hết hạn' });
         }
