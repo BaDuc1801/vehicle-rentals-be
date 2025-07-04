@@ -18,7 +18,9 @@ userRouter.post('/login', userController.login);
 userRouter.post('/logout', userController.logout);
 userRouter.post('/forgot-password', userController.sendEmail);
 userRouter.post('/refresh-token', userController.refreshAccessToken);
-userRouter.post('/login-google', userController.loginGoogle)
+userRouter.post('/check-phonenumber', userController.checkPhoneEmail);
+userRouter.post('/login-google', userController.loginGoogle);
+userRouter.post('/login-google-firebase', userController.loginGoogleFirebase);
 userRouter.put('/user/:id', userMiddleware.verifyToken, userController.updateUserByAdmin);
 userRouter.put('/update-infor', userMiddleware.verifyToken, userController.updateUser);
 userRouter.put('/up-avatar', userMiddleware.verifyToken, upload.single('avatar'), userController.uploadAvatar);

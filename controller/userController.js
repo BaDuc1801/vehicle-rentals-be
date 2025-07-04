@@ -1,10 +1,11 @@
 import userModel from "../model/user.schema.js"
-import bcrypt, { hashSync } from "bcrypt"
+import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import { v2 as cloudinary } from 'cloudinary'
 import dotenv from "dotenv"
 import nodemailer from 'nodemailer';
 import { OAuth2Client } from 'google-auth-library';
+import admin from "../firebaseAdmin.js"
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 dotenv.config()
 
@@ -108,7 +109,7 @@ const userController = {
             const { tokenGoogle } = req.body;
 
             if (!tokenGoogle) {
-                return res.status(400).json({ message: 'Token Google không hợp lệ' });
+                return res.status(400).send({ message: 'Token Google không hợp lệ' });
             }
             const ticket = await client.verifyIdToken({
                 idToken: tokenGoogle,
@@ -118,7 +119,7 @@ const userController = {
             const payload = ticket.getPayload();
 
             if (!payload) {
-                return res.status(401).json({ message: 'Xác thực Google thất bại' });
+                return res.status(401).send({ message: 'Xác thực Google thất bại' });
             }
 
             let user = await userModel.findOne({ email: payload.email });
@@ -157,7 +158,7 @@ const userController = {
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'None',
             });
-            res.status(200).json({
+            res.status(200).send({
                 message: isNewUser ? 'Đăng ký Google thành công' : 'Đăng nhập Google thành công',
                 user: {
                     _id: user._id,
@@ -170,21 +171,114 @@ const userController = {
 
         } catch (err) {
             console.error(err);
-            res.status(500).json({ message: 'Đăng nhập Google thất bại', error: err.message });
+            res.status(500).send({ message: 'Đăng nhập Google thất bại', error: err.message });
         }
     },
 
+    checkPhoneEmail: async (req, res) => {
+        try {
+            const { email, phoneNumber } = req.body;
+
+            if (!email || !phoneNumber) {
+                return res.status(400).send({ message: "Thiếu email hoặc số điện thoại" });
+            }
+            const user = await userModel.findOne({ email });
+
+            if (!user) {
+                return res.status(200).send({ message: "Email chưa tồn tại, cho phép tạo user mới" });
+            }
+
+            if (user.phoneNumber !== phoneNumber) {
+                return res.status(400).send({ message: "Số điện thoại không khớp với email này" });
+            }
+
+            return res.status(200).send({ message: "Số điện thoại khớp với email" });
+
+        } catch (error) {
+            console.error(error);
+            return res.status(500).send({ message: "Lỗi server", error: error.message });
+        }
+    },
+
+    loginGoogleFirebase: async (req, res) => {
+        try {
+            const { idToken, phoneNumber } = req.body;
+            if (!idToken) {
+                return res.status(400).send({ message: 'ID token không hợp lệ' });
+            }
+            let decodedToken;
+            try {
+                decodedToken = await admin.auth().verifyIdToken(idToken);
+            } catch (error) {
+                return res.status(401).send({ message: 'ID token không hợp lệ', error: error.message });
+            }
+
+            const { name, email, picture } = decodedToken;
+
+            let user = await userModel.findOne({ email });
+            let isNewUser = false;
+            if (!user) {
+                user = await userModel.create({
+                    phoneNumber: phoneNumber,
+                    username: name,
+                    email,
+                    password: '',
+                    avatar: picture,
+                });
+                isNewUser = true;
+            }
+
+            const accessToken = jwt.sign(
+                { userId: user._id, role: user.role },
+                process.env.SECRETKEY,
+                { expiresIn: '1h' }
+            );
+            const refreshToken = jwt.sign(
+                { userId: user._id, role: user.role },
+                process.env.SECRETKEY,
+                { expiresIn: '24h' }
+            );
+
+            res.cookie('access_token', accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'None',
+            });
+            res.cookie('refresh_token', refreshToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'None',
+            });
+
+            res.status(200).send({
+                message: isNewUser
+                    ? 'Đăng ký Firebase Google thành công'
+                    : 'Đăng nhập Firebase Google thành công',
+                user: {
+                    _id: user._id,
+                    username: user.username,
+                    email: user.email,
+                    avatar: user.avatar,
+                    role: user.role,
+                },
+            });
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).send({ message: 'Lỗi server loginGoogleFirebase', error: error.message });
+        }
+    },
 
     refreshAccessToken: async (req, res) => {
         const refreshToken = req.cookies.refresh_token;
         if (!refreshToken) {
-            return res.status(401).json({ message: 'Không tìm thấy refresh token' });
+            return res.status(401).send({ message: 'Không tìm thấy refresh token' });
         }
         try {
             const decoded = jwt.verify(refreshToken, process.env.SECRETKEY);
             const user = await userModel.findById(decoded.userId);
             if (!user) {
-                return res.status(403).json({ message: 'Không tìm thấy người dùng' });
+                return res.status(403).send({ message: 'Không tìm thấy người dùng' });
             }
 
             const newAccessToken = jwt.sign({
@@ -209,7 +303,7 @@ const userController = {
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'None',
         });
-        res.status(200).json({ message: "Đăng xuất thành công" })
+        res.status(200).send({ message: "Đăng xuất thành công" })
     },
 
     getUserInfor: async (req, res) => {
@@ -267,24 +361,24 @@ const userController = {
                         if (result && result.url) {
                             user.avatar = result.url;
                             await user.save()
-                            return res.status(200).json({
+                            return res.status(200).send({
                                 message: 'Client information updated successfully',
                                 user: result.url
                             });
                         } else {
-                            return res.status(500).json({
+                            return res.status(500).send({
                                 message: 'Error when upload file: ' + err.message
                             });
                         }
                     }
                 )
             } else {
-                return res.status(404).json({
+                return res.status(404).send({
                     message: 'Image not found'
                 });
             }
         } else {
-            return res.status(404).json({
+            return res.status(404).send({
                 message: 'Client not found'
             });
         }
@@ -303,24 +397,24 @@ const userController = {
                         if (result && result.url) {
                             user.avatar = result.url;
                             await user.save()
-                            return res.status(200).json({
+                            return res.status(200).send({
                                 message: 'Client information updated successfully',
                                 user: result.url
                             });
                         } else {
-                            return res.status(500).json({
+                            return res.status(500).send({
                                 message: 'Error when upload file: ' + err.message
                             });
                         }
                     }
                 )
             } else {
-                return res.status(404).json({
+                return res.status(404).send({
                     message: 'Image not found'
                 });
             }
         } else {
-            return res.status(404).json({
+            return res.status(404).send({
                 message: 'Client not found'
             });
         }
